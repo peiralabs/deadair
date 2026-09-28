@@ -6,8 +6,8 @@ Many existing tools sync gluetun's forwarded port into qBittorrent, but a synced
 
 ```text
 [ok]   probe           all probes succeeded
-[ok]   tunnel          58.98.64.104
-[fail] port_agreement  forwarded 5914, listening 6881
+[ok]   tunnel          203.0.113.42
+[fail] port_agreement  forwarded 51413, listening 6881
 [fail] reachability    firewalled
 [fail] traffic         3 torrents want data; 0 bytes in 900s
 [fail] overall
@@ -33,16 +33,28 @@ A check that fails on one sample is reported as a warning until it has failed `D
 
 ## Install
 
-Build and install from source:
+Pull the container image (linux/amd64 and linux/arm64):
 
 ```sh
-cargo install --path .
+docker pull ghcr.io/peiralabs/deadair:latest
 ```
 
-Or build the container image, which is a static musl binary in a `scratch` image:
+Or download a static binary from the [latest release](https://github.com/peiralabs/deadair/releases/latest).
+It links statically against musl, so it has no runtime dependencies and runs on a
+busybox NAS as happily as on a full distro:
 
 ```sh
-docker build -t deadair .
+curl -LO https://github.com/peiralabs/deadair/releases/latest/download/deadair-x86_64-unknown-linux-musl
+chmod +x deadair-x86_64-unknown-linux-musl
+```
+
+Each release also ships `SHA256SUMS`. The released binaries are extracted from the same
+build that produces the container image, so they are byte-identical to what runs inside it.
+
+Or build from source:
+
+```sh
+cargo install --git https://github.com/peiralabs/deadair --locked
 ```
 
 Run it beside the stack it watches. Sharing gluetun's network namespace is what lets
@@ -61,7 +73,7 @@ services:
     network_mode: "service:gluetun"
 
   deadair:
-    build: .
+    image: ghcr.io/peiralabs/deadair:latest
     network_mode: "service:gluetun"
     environment:
       DEADAIR_GLUETUN_APIKEY: ${DEADAIR_GLUETUN_APIKEY}

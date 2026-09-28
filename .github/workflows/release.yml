@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # needed to create the GitHub Release
   packages: write
 
 jobs:
@@ -46,3 +46,44 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      # The final image stage is `FROM scratch` containing only the binary, so
+      # buildx can emit it straight to disk. This reuses the cached build above,
+      # which means the released binary is byte-identical to the one in the
+      # image rather than a second build that could drift from it.
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          outputs: type=local,dest=extracted
+
+      - name: Name the binaries and checksum them
+        run: |
+          set -euo pipefail
+          find extracted -type f -printf '%p  %s bytes\n'
+          # Locate by path rather than assuming buildx's layout, and fail loudly
+          # if either architecture is missing instead of shipping a partial release.
+          amd=$(find extracted -type f -name deadair -path '*amd64*' | head -1)
+          arm=$(find extracted -type f -name deadair -path '*arm64*' | head -1)
+          [ -n "$amd" ] || { echo "::error::amd64 binary not found in extracted/"; exit 1; }
+          [ -n "$arm" ] || { echo "::error::arm64 binary not found in extracted/"; exit 1; }
+          mkdir -p release
+          cp "$amd" release/deadair-x86_64-unknown-linux-musl
+          cp "$arm" release/deadair-aarch64-unknown-linux-musl
+          chmod +x release/deadair-*
+          cd release
+          sha256sum deadair-* > SHA256SUMS
+          cat SHA256SUMS
+          file deadair-*
+
+      - name: Publish the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            release/deadair-x86_64-unknown-linux-musl \
+            release/deadair-aarch64-unknown-linux-musl \
+            release/SHA256SUMS \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes

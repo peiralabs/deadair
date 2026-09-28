@@ -1,6 +1,6 @@
 [package]
 name = "deadair"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Verify that a gluetun and qBittorrent stack is actually alive"
 license = "Apache-2.0 OR MIT"
