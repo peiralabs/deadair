@@ -4,6 +4,12 @@ on:
   push:
   pull_request:
 
+# Both jobs only read the repository. Stating this explicitly rather than
+# inheriting the org default means the token stays read-only even if that
+# default is ever widened.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
