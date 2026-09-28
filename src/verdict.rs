@@ -310,7 +310,7 @@ mod tests {
         Observation {
             at,
             forwarded_port: Some(5914),
-            vpn_public_ip: Some("58.98.64.104".into()),
+            vpn_public_ip: Some("203.0.113.42".into()),
             listen_port: Some(5914),
             connection_status: Some("connected".into()),
             downloaded_bytes: Some(100),
@@ -409,7 +409,7 @@ mod tests {
         ] {
             assert!(!is_public_ip(ip), "{ip}");
         }
-        assert!(is_public_ip("58.98.64.104"));
+        assert!(is_public_ip("203.0.113.42"));
         assert!(is_public_ip("2001:4860:4860::8888"));
     }
 
@@ -433,7 +433,7 @@ mod tests {
     fn ipv4_mapped_private_is_not_public() {
         assert!(!is_public_ip("::ffff:192.168.1.1"));
         assert!(!is_public_ip("::ffff:10.0.0.1"));
-        assert!(is_public_ip("::ffff:58.98.64.104"));
+        assert!(is_public_ip("::ffff:203.0.113.42"));
     }
 
     #[test]
