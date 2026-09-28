@@ -16,7 +16,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # arm64 is built under emulation, which is slow but keeps this to one
       # runner. Swap to a native arm64 runner if the build time becomes annoying.
